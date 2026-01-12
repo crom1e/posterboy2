@@ -5,7 +5,11 @@ import { MQTT_CONFIG } from '@/config/mqtt.config';
 export interface MediaDetails {
   aspect: string;
   resolution: string;
+  resolutionType?: string;
+  hdrType?: string;
   audio: string;
+  audioCodec?: string;
+  audioChannels?: string;
 }
 
 export interface WeatherData {
@@ -23,10 +27,31 @@ interface MqttState {
   temperature: string | null;
 }
 
+interface KodiStreamDetails {
+  video: Array<{
+    aspect: number;
+    width: number;
+    height: number;
+    hdrtype?: string;
+    codec?: string;
+  }>;
+  audio: Array<{
+    channels: number;
+    codec: string;
+    language?: string;
+  }>;
+}
+
+interface KodiPayload {
+  val: string;
+  kodi_details: {
+    streamdetails: KodiStreamDetails;
+  };
+}
+
 // Decode URL if it's URL-encoded
 function decodeUrlIfNeeded(url: string): string {
   try {
-    // Check if URL appears to be encoded (contains %xx patterns)
     if (/%[0-9A-Fa-f]{2}/.test(url)) {
       return decodeURIComponent(url);
     }
@@ -34,6 +59,69 @@ function decodeUrlIfNeeded(url: string): string {
   } catch {
     return url;
   }
+}
+
+function getResolutionType(width: number): string {
+  if (width >= 3840) return '4k';
+  if (width >= 1920) return '1080p';
+  if (width >= 1280) return '720p';
+  return 'sd';
+}
+
+function formatResolution(width: number, height: number, hdrtype?: string): string {
+  let res = '';
+  if (width >= 3840) res = '4K';
+  else if (width >= 1920) res = '1080p';
+  else if (width >= 1280) res = '720p';
+  else res = `${width}x${height}`;
+  
+  if (hdrtype === 'dolbyvision') return `${res} DV`;
+  if (hdrtype === 'hdr10') return `${res} HDR10`;
+  if (hdrtype === 'hdr10plus') return `${res} HDR10+`;
+  if (hdrtype === 'hlg') return `${res} HLG`;
+  
+  return res;
+}
+
+function formatAudioChannels(channels: number): string {
+  if (channels === 8) return '7.1';
+  if (channels === 6) return '5.1';
+  if (channels === 2) return '2.0';
+  return `${channels}ch`;
+}
+
+function formatAudio(channels: number, codec: string): string {
+  const channelStr = formatAudioChannels(channels);
+  const codecStr = codec.toUpperCase();
+  return `${channelStr} ${codecStr}`;
+}
+
+function formatAspect(aspect: number): string {
+  return `${aspect.toFixed(2)}:1`;
+}
+
+function parseKodiDetails(payload: KodiPayload): MediaDetails {
+  const video = payload.kodi_details.streamdetails.video[0];
+  const audio = payload.kodi_details.streamdetails.audio[0];
+
+  return {
+    resolution: formatResolution(video.width, video.height, video.hdrtype),
+    resolutionType: getResolutionType(video.width),
+    hdrType: video.hdrtype?.toLowerCase(),
+    audio: formatAudio(audio.channels, audio.codec),
+    audioCodec: audio.codec.toLowerCase(),
+    audioChannels: formatAudioChannels(audio.channels),
+    aspect: formatAspect(video.aspect),
+  };
+}
+
+function isKodiPayload(payload: unknown): payload is KodiPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'kodi_details' in payload &&
+    typeof (payload as KodiPayload).kodi_details?.streamdetails === 'object'
+  );
 }
 
 export function useMqtt() {
@@ -72,7 +160,6 @@ export function useMqtt() {
         console.log('MQTT connected');
         setState(prev => ({ ...prev, connected: true, error: null }));
         
-        // Subscribe to all topics
         const topics = Object.values(MQTT_CONFIG.topics);
         topics.forEach(topic => {
           client.subscribe(topic, { qos: 1 }, (err) => {
@@ -103,8 +190,13 @@ export function useMqtt() {
           }
         } else if (topic === topics.details) {
           try {
-            const details = JSON.parse(payload) as MediaDetails;
-            setState(prev => ({ ...prev, details }));
+            const parsed = JSON.parse(payload);
+            if (isKodiPayload(parsed)) {
+              const details = parseKodiDetails(parsed);
+              setState(prev => ({ ...prev, details }));
+            } else {
+              setState(prev => ({ ...prev, details: parsed as MediaDetails }));
+            }
           } catch (e) {
             console.error('Failed to parse details JSON:', e);
           }

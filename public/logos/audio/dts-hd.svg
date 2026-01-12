@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="white">
+  <text x="0" y="32" font-family="Arial, sans-serif" font-size="32" font-weight="bold" letter-spacing="-1" fill="white">DTS</text>
+  <text x="70" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white">HD</text>
+  <text x="70" y="18" font-family="Arial, sans-serif" font-size="8" fill="white">Master Audio</text>
+</svg>
