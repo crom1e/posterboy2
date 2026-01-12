@@ -13,8 +13,10 @@ export interface MediaDetails {
 }
 
 export interface WeatherData {
-  condition: string;
-  temp: number;
+  state: string;
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
 }
 
 interface MqttState {
@@ -202,7 +204,13 @@ export function useMqtt() {
           }
         } else if (topic === topics.weather) {
           try {
-            const weather = JSON.parse(payload) as WeatherData;
+            const parsed = JSON.parse(payload);
+            const weather: WeatherData = {
+              state: parsed.state || 'unknown',
+              temperature: parsed.attributes?.temperature ?? 0,
+              humidity: parsed.attributes?.humidity ?? 0,
+              windSpeed: parsed.attributes?.wind_speed ?? 0,
+            };
             setState(prev => ({ ...prev, weather }));
           } catch (e) {
             console.error('Failed to parse weather JSON:', e);
