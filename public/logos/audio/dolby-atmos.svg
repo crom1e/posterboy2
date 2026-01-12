@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 50" fill="white">
+  <path d="M0 0h20c11 0 20 11.2 20 25s-9 25-20 25H0V0zm10 37.5h8c5.5 0 10-5.6 10-12.5S23.5 12.5 18 12.5h-8v25z"/>
+  <path d="M42 0h20c11 0 20 11.2 20 25s-9 25-20 25H42V0zm10 37.5h8c5.5 0 10-5.6 10-12.5S65.5 12.5 60 12.5h-8v25z"/>
+  <text x="88" y="35" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">ATMOS</text>
+</svg>
