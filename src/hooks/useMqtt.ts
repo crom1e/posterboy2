@@ -1,12 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import mqtt, { MqttClient } from 'mqtt';
-
-interface MqttConfig {
-  brokerUrl: string;
-  username?: string;
-  password?: string;
-  topic: string;
-}
+import { MQTT_CONFIG } from '@/config/mqtt.config';
 
 interface MqttState {
   connected: boolean;
@@ -14,19 +8,13 @@ interface MqttState {
   error: string | null;
 }
 
-const DEFAULT_CONFIG: MqttConfig = {
-  brokerUrl: 'ws://localhost:9001', // Default Mosquitto WebSocket port
-  topic: 'posterboy2/poster',
-};
-
-export function useMqtt(config: Partial<MqttConfig> = {}) {
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+export function useMqtt() {
   const [state, setState] = useState<MqttState>({
     connected: false,
     posterUrl: null,
     error: null,
   });
-  
+
   const clientRef = useRef<MqttClient | null>(null);
 
   const connect = useCallback(() => {
@@ -39,30 +27,30 @@ export function useMqtt(config: Partial<MqttConfig> = {}) {
       connectTimeout: 10000,
     };
 
-    if (finalConfig.username) {
-      options.username = finalConfig.username;
-      options.password = finalConfig.password;
+    if (MQTT_CONFIG.username) {
+      options.username = MQTT_CONFIG.username;
+      options.password = MQTT_CONFIG.password;
     }
 
     try {
-      const client = mqtt.connect(finalConfig.brokerUrl, options);
+      const client = mqtt.connect(MQTT_CONFIG.brokerUrl, options);
       clientRef.current = client;
 
       client.on('connect', () => {
         console.log('MQTT connected');
         setState(prev => ({ ...prev, connected: true, error: null }));
-        client.subscribe(finalConfig.topic, { qos: 1 }, (err) => {
+        client.subscribe(MQTT_CONFIG.topic, { qos: 1 }, (err) => {
           if (err) {
             console.error('Subscribe error:', err);
             setState(prev => ({ ...prev, error: `Subscribe error: ${err.message}` }));
           } else {
-            console.log(`Subscribed to ${finalConfig.topic}`);
+            console.log(`Subscribed to ${MQTT_CONFIG.topic}`);
           }
         });
       });
 
       client.on('message', (topic, message) => {
-        if (topic === finalConfig.topic) {
+        if (topic === MQTT_CONFIG.topic) {
           const url = message.toString().trim();
           console.log('Received poster URL:', url);
           if (url) {
@@ -89,7 +77,7 @@ export function useMqtt(config: Partial<MqttConfig> = {}) {
       const error = err instanceof Error ? err.message : 'Connection failed';
       setState(prev => ({ ...prev, error }));
     }
-  }, [finalConfig.brokerUrl, finalConfig.username, finalConfig.password, finalConfig.topic]);
+  }, []);
 
   useEffect(() => {
     connect();

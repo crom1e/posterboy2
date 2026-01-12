@@ -5,25 +5,8 @@ import { TimeCard } from './TimeCard';
 import { WeatherCard } from './WeatherCard';
 import { SensorCards } from './SensorCards';
 
-interface KioskLayoutProps {
-  mqttBrokerUrl?: string;
-  mqttUsername?: string;
-  mqttPassword?: string;
-  mqttTopic?: string;
-}
-
-export function KioskLayout({
-  mqttBrokerUrl,
-  mqttUsername,
-  mqttPassword,
-  mqttTopic,
-}: KioskLayoutProps) {
-  const { connected, posterUrl, error } = useMqtt({
-    brokerUrl: mqttBrokerUrl,
-    username: mqttUsername,
-    password: mqttPassword,
-    topic: mqttTopic,
-  });
+export function KioskLayout() {
+  const { connected, posterUrl, error } = useMqtt();
 
   return (
     <div className="relative min-h-screen w-full bg-background flex flex-col">
