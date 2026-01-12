@@ -1,73 +1,77 @@
-# Welcome to your Lovable project
+# Posterboy Kiosk
 
-## Project info
+A full-screen, portrait-oriented (1080×1920) kiosk web application designed for unattended displays. It receives real-time data via MQTT to show movie posters, weather, temperature, and media playback information.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- 🎬 **Movie/Media Poster** — Real-time poster display from Kodi
+- 🌤️ **Weather** — Current conditions from Home Assistant
+- 🌡️ **Indoor Temperature** — Sensor data display
+- ▶️ **Playback Progress** — Media progress tracking
+- 📺 **Media Details** — Resolution, HDR, and audio format logos (Dolby Vision, HDR10, Dolby Atmos, DTS, etc.)
+- 🕐 **Local Time** — Clock display
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **React** + **TypeScript** + **Vite**
+- **Tailwind CSS** + **shadcn/ui**
+- **MQTT.js** (WebSocket transport)
+- **Lucide React** icons
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## MQTT Topics
 
-Changes made via Lovable will be committed automatically to this repo.
+| Topic | Purpose | Payload |
+|-------|---------|---------|
+| `posterboy2/poster` | Poster image URL | `string` |
+| `posterboy2/progress` | Playback progress | `"0"` - `"100"` |
+| `posterboy2/details` | Kodi media metadata | JSON (see below) |
+| `posterboy2/weather` | Home Assistant weather | JSON (see below) |
+| `posterboy2/temperature` | Indoor temperature | `string` (e.g., `"21.5"`) |
 
-**Use your preferred IDE**
+### Payload Examples
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+**Details (Kodi):**
+```json
+{
+  "video": { "width": 3840, "height": 2160, "codec": "hevc", "hdrtype": "dolbyvision" },
+  "audio": { "codec": "truehd", "channels": 8 }
+}
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Weather (Home Assistant):**
+```json
+{
+  "state": "snowy",
+  "attributes": { "temperature": -7.1, "humidity": 90, "wind_speed": 9.7 }
+}
+```
 
-Follow these steps:
+## Configuration
+
+Edit `src/config/mqtt.config.ts` to set your MQTT broker:
+
+```ts
+export const mqttConfig = {
+  brokerUrl: 'ws://your-broker:9001',
+  topics: {
+    poster: 'posterboy2/poster',
+    progress: 'posterboy2/progress',
+    details: 'posterboy2/details',
+    weather: 'posterboy2/weather',
+    temperature: 'posterboy2/temperature',
+  },
+};
+```
+
+## Quick Start
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open in a browser sized to 1080×1920 (portrait) for the intended display experience.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## License
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT
