@@ -1,4 +1,17 @@
-import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning } from 'lucide-react';
+import { 
+  Cloud, 
+  Sun, 
+  CloudRain, 
+  CloudSnow, 
+  CloudLightning, 
+  CloudFog,
+  Moon,
+  CloudSun,
+  CloudMoon,
+  Wind,
+  CloudDrizzle,
+  Droplets
+} from 'lucide-react';
 import { DataCard } from './DataCard';
 import { WeatherData } from '@/hooks/useMqtt';
 
@@ -6,14 +19,48 @@ interface WeatherCardProps {
   weather: WeatherData | null;
 }
 
-// Simple icon mapping based on condition keywords
-function getWeatherIcon(condition: string) {
-  const lower = condition.toLowerCase();
-  if (lower.includes('rain') || lower.includes('drizzle')) return <CloudRain size={32} className="text-muted-foreground/50" />;
-  if (lower.includes('snow')) return <CloudSnow size={32} className="text-muted-foreground/50" />;
-  if (lower.includes('thunder') || lower.includes('storm')) return <CloudLightning size={32} className="text-muted-foreground/50" />;
-  if (lower.includes('clear') || lower.includes('sunny')) return <Sun size={32} className="text-muted-foreground/50" />;
-  return <Cloud size={32} className="text-muted-foreground/50" />;
+// Home Assistant weather state to icon mapping
+function getWeatherIcon(state: string) {
+  const iconClass = "text-muted-foreground/70";
+  const size = 36;
+  
+  switch (state) {
+    case 'sunny':
+      return <Sun size={size} className={iconClass} />;
+    case 'clear-night':
+      return <Moon size={size} className={iconClass} />;
+    case 'partlycloudy':
+      return <CloudSun size={size} className={iconClass} />;
+    case 'cloudy':
+      return <Cloud size={size} className={iconClass} />;
+    case 'rainy':
+      return <CloudRain size={size} className={iconClass} />;
+    case 'pouring':
+      return <CloudDrizzle size={size} className={iconClass} />;
+    case 'snowy':
+      return <CloudSnow size={size} className={iconClass} />;
+    case 'snowy-rainy':
+      return <CloudSnow size={size} className={iconClass} />;
+    case 'fog':
+      return <CloudFog size={size} className={iconClass} />;
+    case 'lightning':
+    case 'lightning-rainy':
+      return <CloudLightning size={size} className={iconClass} />;
+    case 'windy':
+    case 'windy-variant':
+      return <Wind size={size} className={iconClass} />;
+    case 'hail':
+      return <CloudDrizzle size={size} className={iconClass} />;
+    default:
+      return <Cloud size={size} className={iconClass} />;
+  }
+}
+
+// Format state for display
+function formatState(state: string): string {
+  return state
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 export function WeatherCard({ weather }: WeatherCardProps) {
@@ -29,12 +76,26 @@ export function WeatherCard({ weather }: WeatherCardProps) {
 
   return (
     <DataCard title="Weather" icon={<Cloud size={16} />}>
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-3xl font-bold">{weather.temp}°C</div>
-          <div className="text-sm text-muted-foreground">{weather.condition}</div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-3xl font-bold tracking-tight">
+            {Math.round(weather.temperature)}°
+          </div>
+          <div className="text-sm text-muted-foreground truncate">
+            {formatState(weather.state)}
+          </div>
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground/70">
+            <span className="flex items-center gap-1">
+              <Droplets size={12} />
+              {weather.humidity}%
+            </span>
+            <span className="flex items-center gap-1">
+              <Wind size={12} />
+              {Math.round(weather.windSpeed)} km/h
+            </span>
+          </div>
         </div>
-        {getWeatherIcon(weather.condition)}
+        {getWeatherIcon(weather.state)}
       </div>
     </DataCard>
   );
