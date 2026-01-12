@@ -4,12 +4,12 @@ A full-screen, portrait-oriented (1080×1920) kiosk web application designed for
 
 ## Features
 
-- 🎬 **Movie/Media Poster** — Real-time poster display from Kodi
-- 🌤️ **Weather** — Current conditions from Home Assistant
-- 🌡️ **Indoor Temperature** — Sensor data display
-- ▶️ **Playback Progress** — Media progress tracking
-- 📺 **Media Details** — Resolution, HDR, and audio format logos (Dolby Vision, HDR10, Dolby Atmos, DTS, etc.)
-- 🕐 **Local Time** — Clock display
+- **Movie/Media Poster** — Real-time poster display from Kodi
+- **Weather** — Current conditions from Home Assistant
+- **Indoor Temperature** — Sensor data display
+- **Playback Progress** — Media progress tracking
+- **Media Details** — Resolution, HDR, and audio format logos (Dolby Vision, HDR10, Dolby Atmos, DTS, etc.)
+- **Local Time** — Clock display
 
 ## Tech Stack
 
