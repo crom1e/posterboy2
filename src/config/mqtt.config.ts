@@ -10,6 +10,12 @@ export const MQTT_CONFIG = {
   username: undefined as string | undefined,
   password: undefined as string | undefined,
 
-  // Topic for poster URL messages (retained)
-  topic: 'posterboy2/poster',
+  // MQTT Topics
+  topics: {
+    poster: 'posterboy2/poster',
+    progress: 'posterboy2/progress',
+    details: 'posterboy2/details',
+    weather: 'posterboy2/weather',
+    temperature: 'posterboy2/temperature',
+  },
 } as const;

@@ -9,18 +9,18 @@ export function PosterDisplay({ posterUrl }: PosterDisplayProps) {
 
   if (!posterUrl || imageError) {
     return (
-      <div className="w-full h-64 bg-muted/20 flex items-center justify-center">
+      <div className="w-full h-full bg-muted/20 flex items-center justify-center">
         <span className="text-muted-foreground text-lg">No poster available</span>
       </div>
     );
   }
 
   return (
-    <div className="w-full flex-shrink-0">
+    <div className="w-full h-full overflow-hidden">
       <img
         src={posterUrl}
         alt="Display poster"
-        className="w-full h-auto object-cover object-top"
+        className="w-full h-full object-cover object-top"
         onError={() => setImageError(true)}
         onLoad={() => setImageError(false)}
       />

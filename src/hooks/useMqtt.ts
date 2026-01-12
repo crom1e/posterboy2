@@ -2,17 +2,49 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import mqtt, { MqttClient } from 'mqtt';
 import { MQTT_CONFIG } from '@/config/mqtt.config';
 
+export interface MediaDetails {
+  aspect: string;
+  resolution: string;
+  audio: string;
+}
+
+export interface WeatherData {
+  condition: string;
+  temp: number;
+}
+
 interface MqttState {
   connected: boolean;
-  posterUrl: string | null;
   error: string | null;
+  posterUrl: string | null;
+  progress: number | null;
+  details: MediaDetails | null;
+  weather: WeatherData | null;
+  temperature: string | null;
+}
+
+// Decode URL if it's URL-encoded
+function decodeUrlIfNeeded(url: string): string {
+  try {
+    // Check if URL appears to be encoded (contains %xx patterns)
+    if (/%[0-9A-Fa-f]{2}/.test(url)) {
+      return decodeURIComponent(url);
+    }
+    return url;
+  } catch {
+    return url;
+  }
 }
 
 export function useMqtt() {
   const [state, setState] = useState<MqttState>({
     connected: false,
-    posterUrl: null,
     error: null,
+    posterUrl: null,
+    progress: null,
+    details: null,
+    weather: null,
+    temperature: null,
   });
 
   const clientRef = useRef<MqttClient | null>(null);
@@ -39,23 +71,52 @@ export function useMqtt() {
       client.on('connect', () => {
         console.log('MQTT connected');
         setState(prev => ({ ...prev, connected: true, error: null }));
-        client.subscribe(MQTT_CONFIG.topic, { qos: 1 }, (err) => {
-          if (err) {
-            console.error('Subscribe error:', err);
-            setState(prev => ({ ...prev, error: `Subscribe error: ${err.message}` }));
-          } else {
-            console.log(`Subscribed to ${MQTT_CONFIG.topic}`);
-          }
+        
+        // Subscribe to all topics
+        const topics = Object.values(MQTT_CONFIG.topics);
+        topics.forEach(topic => {
+          client.subscribe(topic, { qos: 1 }, (err) => {
+            if (err) {
+              console.error(`Subscribe error for ${topic}:`, err);
+            } else {
+              console.log(`Subscribed to ${topic}`);
+            }
+          });
         });
       });
 
       client.on('message', (topic, message) => {
-        if (topic === MQTT_CONFIG.topic) {
-          const url = message.toString().trim();
-          console.log('Received poster URL:', url);
+        const payload = message.toString().trim();
+        console.log(`Received on ${topic}:`, payload);
+
+        const { topics } = MQTT_CONFIG;
+
+        if (topic === topics.poster) {
+          const url = decodeUrlIfNeeded(payload);
           if (url) {
             setState(prev => ({ ...prev, posterUrl: url }));
           }
+        } else if (topic === topics.progress) {
+          const progress = parseFloat(payload);
+          if (!isNaN(progress)) {
+            setState(prev => ({ ...prev, progress: Math.min(100, Math.max(0, progress)) }));
+          }
+        } else if (topic === topics.details) {
+          try {
+            const details = JSON.parse(payload) as MediaDetails;
+            setState(prev => ({ ...prev, details }));
+          } catch (e) {
+            console.error('Failed to parse details JSON:', e);
+          }
+        } else if (topic === topics.weather) {
+          try {
+            const weather = JSON.parse(payload) as WeatherData;
+            setState(prev => ({ ...prev, weather }));
+          } catch (e) {
+            console.error('Failed to parse weather JSON:', e);
+          }
+        } else if (topic === topics.temperature) {
+          setState(prev => ({ ...prev, temperature: payload }));
         }
       });
 
