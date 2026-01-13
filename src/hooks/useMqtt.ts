@@ -3,13 +3,25 @@ import mqtt, { MqttClient } from 'mqtt';
 import { MQTT_CONFIG } from '@/config/mqtt.config';
 
 export interface MediaDetails {
-  aspect: string;
+  // Media info
+  title?: string;
+  mediaType?: string;
+  
+  // Video
   resolution: string;
   resolutionType?: string;
   hdrType?: string;
+  aspect: string;
+  videoCodec?: string;
+  videoTranscoded?: boolean;
+  bitDepth?: number;
+  colorPrimaries?: string;
+  
+  // Audio
   audio: string;
   audioCodec?: string;
   audioChannels?: string;
+  audioTranscoded?: boolean;
 }
 
 export interface WeatherData {
@@ -29,6 +41,7 @@ interface MqttState {
   temperature: string | null;
 }
 
+// Kodi payload types
 interface KodiStreamDetails {
   video: Array<{
     aspect: number;
@@ -51,6 +64,36 @@ interface KodiPayload {
   };
 }
 
+// Plex payload types
+interface PlexPayload {
+  progress?: number;
+  media: {
+    title: string;
+    type: string;
+    poster_url: string;
+    backdrop_url: string;
+  };
+  video: {
+    codec: string;
+    transcoded: boolean;
+    width: number;
+    height: number;
+    resolution: string;
+    aspect_ratio: number;
+    aspect_label: string;
+    hdr: boolean;
+    hdr_type: string;
+    bit_depth: number;
+    color_primaries: string | null;
+  };
+  audio: {
+    codec: string;
+    channels: number;
+    layout: string;
+    transcoded: boolean;
+  };
+}
+
 // Decode URL if it's URL-encoded
 function decodeUrlIfNeeded(url: string): string {
   try {
@@ -63,16 +106,19 @@ function decodeUrlIfNeeded(url: string): string {
   }
 }
 
-function getResolutionType(width: number): string {
+// Kodi resolution mapping
+function getKodiResolutionType(width: number): string {
   if (width >= 3840) return '4k';
+  if (width >= 2560) return '1440p';
   if (width >= 1920) return '1080p';
   if (width >= 1280) return '720p';
   return 'sd';
 }
 
-function formatResolution(width: number, height: number, hdrtype?: string): string {
+function formatKodiResolution(width: number, height: number, hdrtype?: string): string {
   let res = '';
   if (width >= 3840) res = '4K';
+  else if (width >= 2560) res = '1440p';
   else if (width >= 1920) res = '1080p';
   else if (width >= 1280) res = '720p';
   else res = `${width}x${height}`;
@@ -102,18 +148,72 @@ function formatAspect(aspect: number): string {
   return `${aspect.toFixed(2)}:1`;
 }
 
+// HDR type mapping for Plex (backend values → logo keys)
+const hdrLogoMap: Record<string, string | undefined> = {
+  'sdr': undefined,
+  'hdr10': 'hdr10',
+  'hlg': 'hlg',
+  'dolby vision': 'dolbyvision',
+  'hdr': 'hdr',
+};
+
+// Resolution mapping for Plex (backend values → logo keys)
+const resolutionLogoMap: Record<string, string> = {
+  '4K': '4k',
+  '1440p': '1440p',
+  '1080p': '1080p',
+  '720p': '720p',
+  'SD': 'sd',
+};
+
 function parseKodiDetails(payload: KodiPayload): MediaDetails {
   const video = payload.kodi_details.streamdetails.video[0];
   const audio = payload.kodi_details.streamdetails.audio[0];
 
   return {
-    resolution: formatResolution(video.width, video.height, video.hdrtype),
-    resolutionType: getResolutionType(video.width),
+    resolution: formatKodiResolution(video.width, video.height, video.hdrtype),
+    resolutionType: getKodiResolutionType(video.width),
     hdrType: video.hdrtype?.toLowerCase(),
     audio: formatAudio(audio.channels, audio.codec),
     audioCodec: audio.codec.toLowerCase(),
     audioChannels: formatAudioChannels(audio.channels),
     aspect: formatAspect(video.aspect),
+    videoCodec: video.codec,
+  };
+}
+
+function parsePlexDetails(payload: PlexPayload): MediaDetails {
+  const { media, video, audio } = payload;
+  
+  // Map HDR type to logo key
+  const hdrKey = video.hdr_type?.toLowerCase();
+  const hdrType = hdrLogoMap[hdrKey] ?? (video.hdr ? 'hdr' : undefined);
+  
+  // Map resolution to logo key
+  const resolutionType = resolutionLogoMap[video.resolution] ?? 'sd';
+  
+  // Build display resolution string
+  let resolutionDisplay = video.resolution;
+  if (hdrType) {
+    const hdrLabel = video.hdr_type === 'Dolby Vision' ? 'DV' : video.hdr_type;
+    resolutionDisplay = `${video.resolution} ${hdrLabel}`;
+  }
+
+  return {
+    title: media.title,
+    mediaType: media.type,
+    resolution: resolutionDisplay,
+    resolutionType,
+    hdrType,
+    aspect: video.aspect_label,
+    videoCodec: video.codec,
+    videoTranscoded: video.transcoded,
+    bitDepth: video.bit_depth,
+    colorPrimaries: video.color_primaries ?? undefined,
+    audio: formatAudio(audio.channels, audio.codec),
+    audioCodec: audio.codec.toLowerCase(),
+    audioChannels: formatAudioChannels(audio.channels),
+    audioTranscoded: audio.transcoded,
   };
 }
 
@@ -123,6 +223,17 @@ function isKodiPayload(payload: unknown): payload is KodiPayload {
     payload !== null &&
     'kodi_details' in payload &&
     typeof (payload as KodiPayload).kodi_details?.streamdetails === 'object'
+  );
+}
+
+function isPlexPayload(payload: unknown): payload is PlexPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'media' in payload &&
+    'video' in payload &&
+    'audio' in payload &&
+    typeof (payload as PlexPayload).media?.title === 'string'
   );
 }
 
@@ -193,7 +304,18 @@ export function useMqtt() {
         } else if (topic === topics.details) {
           try {
             const parsed = JSON.parse(payload);
-            if (isKodiPayload(parsed)) {
+            
+            if (isPlexPayload(parsed)) {
+              const details = parsePlexDetails(parsed);
+              setState(prev => ({
+                ...prev,
+                details,
+                // Use Plex poster as fallback if separate topic hasn't provided one
+                posterUrl: prev.posterUrl || parsed.media.poster_url,
+                // Update progress if included in Plex payload
+                progress: parsed.progress !== undefined ? parsed.progress : prev.progress,
+              }));
+            } else if (isKodiPayload(parsed)) {
               const details = parseKodiDetails(parsed);
               setState(prev => ({ ...prev, details }));
             } else {

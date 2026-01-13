@@ -18,6 +18,7 @@ const LOGO_MAP: Record<string, Record<string, string>> = {
   },
   video: {
     '4k': '/logos/video/4k-uhd.svg',
+    '1440p': '/logos/video/1440p.svg',
     '1080p': '/logos/video/1080p.svg',
     '720p': '/logos/video/720p.svg',
   },
@@ -26,6 +27,7 @@ const LOGO_MAP: Record<string, Record<string, string>> = {
     'hdr10': '/logos/video/hdr10.svg',
     'hdr10plus': '/logos/video/hdr10plus.svg',
     'hlg': '/logos/video/hlg.svg',
+    'hdr': '/logos/video/hdr.svg',
   },
 };
 

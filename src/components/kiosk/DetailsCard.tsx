@@ -15,9 +15,16 @@ export function DetailsCard({ details }: DetailsCardProps) {
     <DataCard title="Details" icon={<Monitor size={16} />}>
       {details ? (
         <div className="space-y-1.5 text-sm">
+          {/* Title Row */}
+          {details.title && (
+            <div className="font-semibold truncate pb-1.5 border-b border-border/50 mb-1.5">
+              {details.title}
+            </div>
+          )}
+
           {/* Resolution Row */}
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Resolution</span>
+            <span className="text-muted-foreground">Video</span>
             <div className="flex items-center gap-1.5">
               {hasVideoLogos ? (
                 <>
@@ -30,6 +37,9 @@ export function DetailsCard({ details }: DetailsCardProps) {
                 </>
               ) : (
                 <span className="font-medium">{details.resolution}</span>
+              )}
+              {details.videoTranscoded && (
+                <span className="text-xs text-yellow-500 font-medium" title="Transcoded">TC</span>
               )}
             </div>
           </div>
@@ -45,6 +55,9 @@ export function DetailsCard({ details }: DetailsCardProps) {
                 </>
               ) : (
                 <span className="font-medium">{details.audio}</span>
+              )}
+              {details.audioTranscoded && (
+                <span className="text-xs text-yellow-500 font-medium" title="Transcoded">TC</span>
               )}
             </div>
           </div>
