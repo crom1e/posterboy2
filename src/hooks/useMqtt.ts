@@ -65,6 +65,39 @@ interface KodiPayload {
   };
 }
 
+// Kodi native topic payloads
+interface KodiTitlePayload {
+  val: string;
+  kodi_details: {
+    title: string;
+    type: string;
+    art: {
+      poster?: string;
+      fanart?: string;
+      clearlogo?: string;
+      [key: string]: string | undefined;
+    };
+    streamdetails: KodiStreamDetails;
+  };
+}
+
+interface KodiProgressPayload {
+  val: string;
+  kodi_time: string;
+  kodi_totaltime: string;
+}
+
+interface KodiPlaybackStatePayload {
+  val: number;
+  kodi_state: string;
+  kodi_playbackdetails?: {
+    currentaudiostream?: {
+      codec: string;
+      channels: number;
+    };
+  };
+}
+
 // Plex payload types
 interface PlexPayload {
   progress?: number;
@@ -106,6 +139,38 @@ function decodeUrlIfNeeded(url: string): string {
   } catch {
     return url;
   }
+}
+
+// Extract real URL from Kodi's "image://encoded_url/" format
+function extractKodiImageUrl(kodiUrl: string | undefined): string | null {
+  if (!kodiUrl || !kodiUrl.startsWith('image://')) return null;
+  
+  // Remove "image://" prefix and trailing "/"
+  let url = kodiUrl.slice(8);
+  if (url.endsWith('/')) url = url.slice(0, -1);
+  
+  // URL decode
+  return decodeUrlIfNeeded(url);
+}
+
+// Parse Kodi title topic payload
+function parseKodiTitlePayload(payload: KodiTitlePayload): MediaDetails {
+  const details = payload.kodi_details;
+  const video = details.streamdetails.video[0];
+  const audio = details.streamdetails.audio[0];
+
+  return {
+    title: details.title,
+    mediaType: details.type,
+    resolution: formatKodiResolution(video.width, video.height, video.hdrtype),
+    resolutionType: getKodiResolutionType(video.width),
+    hdrType: video.hdrtype?.toLowerCase(),
+    videoCodec: video.codec,
+    audio: formatAudio(audio.channels, audio.codec),
+    audioCodec: audio.codec.toLowerCase(),
+    audioChannels: formatAudioChannels(audio.channels),
+    aspect: formatAspect(video.aspect),
+  };
 }
 
 // Kodi resolution mapping
@@ -343,6 +408,46 @@ export function useMqtt() {
           }
         } else if (topic === topics.temperature) {
           setState(prev => ({ ...prev, temperature: payload }));
+        }
+        // Kodi native topics
+        else if (topic === topics.kodiTitle) {
+          try {
+            const parsed = JSON.parse(payload) as KodiTitlePayload;
+            const details = parseKodiTitlePayload(parsed);
+            const posterUrl = extractKodiImageUrl(parsed.kodi_details?.art?.poster);
+            
+            setState(prev => ({
+              ...prev,
+              details,
+              player: 'kodi',
+              posterUrl: posterUrl || prev.posterUrl,
+            }));
+          } catch (e) {
+            console.error('Failed to parse Kodi title:', e);
+          }
+        } else if (topic === topics.kodiProgress) {
+          try {
+            const parsed = JSON.parse(payload) as KodiProgressPayload;
+            const progress = parseFloat(parsed.val);
+            if (!isNaN(progress)) {
+              setState(prev => ({
+                ...prev,
+                progress: Math.min(100, Math.max(0, progress)),
+                player: 'kodi',
+              }));
+            }
+          } catch (e) {
+            console.error('Failed to parse Kodi progress:', e);
+          }
+        } else if (topic === topics.kodiPlaybackState) {
+          try {
+            const parsed = JSON.parse(payload) as KodiPlaybackStatePayload;
+            if (parsed.kodi_state === 'started' || parsed.val === 1) {
+              setState(prev => ({ ...prev, player: 'kodi' }));
+            }
+          } catch (e) {
+            console.error('Failed to parse Kodi playback state:', e);
+          }
         }
       });
 
