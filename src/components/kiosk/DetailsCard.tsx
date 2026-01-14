@@ -14,7 +14,7 @@ export function DetailsCard({ details }: DetailsCardProps) {
   return (
     <DataCard title="Details" icon={<Monitor size={16} />}>
       {details ? (
-        <div className="space-y-1.5 text-sm">
+        <div className="text-sm">
           {/* Title Row */}
           {details.title && (
             <div className="font-semibold truncate pb-1.5 border-b border-border/50 mb-1.5">
@@ -22,10 +22,10 @@ export function DetailsCard({ details }: DetailsCardProps) {
             </div>
           )}
 
-          {/* Resolution Row */}
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Video</span>
-            <div className="flex items-center gap-1.5">
+          {/* Single line: Video · Audio · Aspect */}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {/* Video section */}
+            <div className="flex items-center gap-1">
               {hasVideoLogos ? (
                 <>
                   {details.resolutionType && (
@@ -39,15 +39,14 @@ export function DetailsCard({ details }: DetailsCardProps) {
                 <span className="font-medium">{details.resolution}</span>
               )}
               {details.videoTranscoded && (
-                <span className="text-xs text-yellow-500 font-medium" title="Transcoded">TC</span>
+                <span className="text-xs text-yellow-500 font-medium">TC</span>
               )}
             </div>
-          </div>
 
-          {/* Audio Row */}
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Audio</span>
-            <div className="flex items-center gap-1.5">
+            <span className="text-muted-foreground">·</span>
+
+            {/* Audio section */}
+            <div className="flex items-center gap-1">
               {hasAudioLogo ? (
                 <>
                   <span className="font-medium">{details.audioChannels}</span>
@@ -57,14 +56,13 @@ export function DetailsCard({ details }: DetailsCardProps) {
                 <span className="font-medium">{details.audio}</span>
               )}
               {details.audioTranscoded && (
-                <span className="text-xs text-yellow-500 font-medium" title="Transcoded">TC</span>
+                <span className="text-xs text-yellow-500 font-medium">TC</span>
               )}
             </div>
-          </div>
 
-          {/* Aspect Row */}
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Aspect</span>
+            <span className="text-muted-foreground">·</span>
+
+            {/* Aspect */}
             <span className="font-medium">{details.aspect}</span>
           </div>
         </div>
