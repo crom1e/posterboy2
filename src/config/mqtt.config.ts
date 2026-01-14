@@ -12,10 +12,16 @@ export const MQTT_CONFIG = {
 
   // MQTT Topics
   topics: {
+    // Plex topics
     poster: 'posterboy2/poster',
     progress: 'posterboy2/progress',
     details: 'posterboy2/details',
+    // Weather/temperature
     weather: 'posterboy2/weather',
     temperature: 'posterboy2/temperature',
+    // Kodi topics
+    kodiTitle: 'kodi/title',
+    kodiProgress: 'kodi/progress',
+    kodiPlaybackState: 'kodi/playbackstate',
   },
 } as const;
