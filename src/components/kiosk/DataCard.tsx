@@ -4,11 +4,12 @@ import { ReactNode } from 'react';
 interface DataCardProps {
   title: string;
   icon?: ReactNode;
+  headerRight?: ReactNode;
   children: ReactNode;
   className?: string;
 }
 
-export function DataCard({ title, icon, children, className }: DataCardProps) {
+export function DataCard({ title, icon, headerRight, children, className }: DataCardProps) {
   return (
     <div
       className={cn(
@@ -16,11 +17,14 @@ export function DataCard({ title, icon, children, className }: DataCardProps) {
         className
       )}
     >
-      <div className="flex items-center gap-2 mb-2">
-        {icon && <span className="text-muted-foreground">{icon}</span>}
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          {title}
-        </h3>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {icon && <span className="text-muted-foreground">{icon}</span>}
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            {title}
+          </h3>
+        </div>
+        {headerRight}
       </div>
       <div className="text-foreground">{children}</div>
     </div>
