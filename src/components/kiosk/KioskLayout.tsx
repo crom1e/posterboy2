@@ -8,7 +8,7 @@ import { ProgressCard } from './ProgressCard';
 import { DetailsCard } from './DetailsCard';
 
 export function KioskLayout() {
-  const { connected, posterUrl, error, progress, details, weather, temperature } = useMqtt();
+  const { connected, posterUrl, error, progress, player, details, weather, temperature } = useMqtt();
 
   return (
     <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
@@ -30,7 +30,7 @@ export function KioskLayout() {
         {/* Row 2: Temperature, Progress, Details */}
         <div className="grid grid-cols-3 gap-3">
           <TemperatureCard temperature={temperature} />
-          <ProgressCard progress={progress} />
+          <ProgressCard progress={progress} player={player} />
           <DetailsCard details={details} />
         </div>
       </div>

@@ -36,6 +36,7 @@ interface MqttState {
   error: string | null;
   posterUrl: string | null;
   progress: number | null;
+  player: 'plex' | 'kodi' | null;
   details: MediaDetails | null;
   weather: WeatherData | null;
   temperature: string | null;
@@ -67,6 +68,7 @@ interface KodiPayload {
 // Plex payload types
 interface PlexPayload {
   progress?: number;
+  player?: string;
   media: {
     title: string;
     type: string;
@@ -243,6 +245,7 @@ export function useMqtt() {
     error: null,
     posterUrl: null,
     progress: null,
+    player: null,
     details: null,
     weather: null,
     temperature: null,
@@ -310,6 +313,7 @@ export function useMqtt() {
               setState(prev => ({
                 ...prev,
                 details,
+                player: 'plex',
                 // Use Plex poster as fallback if separate topic hasn't provided one
                 posterUrl: prev.posterUrl || parsed.media.poster_url,
                 // Update progress if included in Plex payload
@@ -317,7 +321,7 @@ export function useMqtt() {
               }));
             } else if (isKodiPayload(parsed)) {
               const details = parseKodiDetails(parsed);
-              setState(prev => ({ ...prev, details }));
+              setState(prev => ({ ...prev, details, player: 'kodi' }));
             } else {
               setState(prev => ({ ...prev, details: parsed as MediaDetails }));
             }
