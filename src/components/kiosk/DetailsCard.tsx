@@ -1,6 +1,6 @@
 import { Monitor } from 'lucide-react';
 import { DataCard } from './DataCard';
-import { MediaDetails } from '@/hooks/useMqtt';
+import { MediaDetails } from '@/types/kiosk';
 import { FormatLogo } from './FormatLogo';
 
 interface DetailsCardProps {

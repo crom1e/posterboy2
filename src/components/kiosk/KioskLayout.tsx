@@ -1,4 +1,4 @@
-import { useMqtt } from '@/hooks/useMqtt';
+import { useKioskData } from '@/hooks/useKioskData';
 import { PosterDisplay } from './PosterDisplay';
 import { ConnectionStatus } from './ConnectionStatus';
 import { TimeCard } from './TimeCard';
@@ -8,7 +8,7 @@ import { ProgressCard } from './ProgressCard';
 import { DetailsCard } from './DetailsCard';
 
 export function KioskLayout() {
-  const { connected, posterUrl, error, progress, player, details, weather, temperature } = useMqtt();
+  const { connected, posterUrl, error, progress, player, details, weather, temperature } = useKioskData();
 
   return (
     <div className="h-screen w-full bg-background flex flex-col overflow-hidden">

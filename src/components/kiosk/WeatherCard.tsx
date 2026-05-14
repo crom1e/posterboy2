@@ -13,7 +13,7 @@ import {
   Droplets
 } from 'lucide-react';
 import { DataCard } from './DataCard';
-import { WeatherData } from '@/hooks/useMqtt';
+import { WeatherData } from '@/types/kiosk';
 
 interface WeatherCardProps {
   weather: WeatherData | null;
